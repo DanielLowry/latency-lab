@@ -8,7 +8,7 @@ This is the execution tracker for Phase 1. It keeps the full phased breakdown of
 
 ## Phase A0 — Define the contract
 **Deliverable**
-- [ ] `bench/README.md` that specifies:
+- [x] `bench/README.md` that specifies:
   - definition of the timed region (only `run_once()` is timed)
   - output schema:
     - `raw.csv`: `iter,ns` (minimum)
@@ -16,24 +16,24 @@ This is the execution tracker for Phase 1. It keeps the full phased breakdown of
   - required run metadata keys for `meta.json`
 
 **Key decisions**
-- [ ] Store samples in nanoseconds (`uint64_t`).
-- [ ] Use a monotonic clock source (`clock_gettime(CLOCK_MONOTONIC_RAW, ...)` on Linux; optional chrono fallback).
+- [x] Store samples in nanoseconds (`uint64_t`).
+- [x] Use a monotonic clock source (`clock_gettime(CLOCK_MONOTONIC_RAW, ...)` on Linux; optional chrono fallback).
 
 ---
 
 ## Phase A1 — Core harness library (timing + stats + CSV)
 **Build**
-- [ ] `bench/timer.h`
+- [x] `bench/timer.h`
   - `now_ns()` implementation
-- [ ] `bench/stats.h`
+- [x] `bench/stats.h`
   - quantiles: min/p50/p95/p99/p999/max
   - Phase 1 approach: collect samples in a vector + sort
-- [ ] `bench/csv.h`
+- [x] `bench/csv.h`
   - write `raw.csv` safely
 
 **Add immediately**
-- [ ] Warmup iterations.
-- [ ] A `noop` case (empty measurement) to estimate timer/loop overhead.
+- [x] Warmup iterations.
+- [x] A `noop` case (empty measurement) to estimate timer/loop overhead.
 
 **Acceptance criteria**
 - [ ] You can run a dummy case and produce:
