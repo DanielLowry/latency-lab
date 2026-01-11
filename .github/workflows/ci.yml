@@ -10,12 +10,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up CMake
-        uses: kitware/setup-cmake@v1
-        with:
-          cmake-version: "3.28.4"
       - name: Install build tools
-        run: sudo apt-get update && sudo apt-get install -y ninja-build g++
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++
       - name: Configure
         run: cmake --preset ninja
       - name: Build
