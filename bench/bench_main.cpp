@@ -60,6 +60,7 @@ int run_benchmark(const Case& bench_case, const CliOptions& options) {
   }
 
   const Quantiles q = compute_quantiles(samples);
+  std::cout << bench_case.name << "\n";
   std::cout << "min,p50,p95,p99,p999,max,mean\n";
   std::cout << q.min << "," << q.p50 << "," << q.p95 << "," << q.p99 << ","
             << q.p999 << "," << q.max << "," << q.mean << "\n";
