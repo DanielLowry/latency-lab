@@ -1,0 +1,13 @@
+# CMake/Ninja build artifacts
+/build/
+/build-*/
+/cmake-build-*/
+/CMakeCache.txt
+/CMakeFiles/
+/cmake_install.cmake
+/Makefile
+/CTestTestfile.cmake
+/Testing/
+/compile_commands.json
+
+raw.csv
