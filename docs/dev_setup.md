@@ -34,6 +34,16 @@ Optional arguments:
 ./build/bench_noop [out.csv] [iters] [warmup]
 ```
 
+List registered cases:
+```
+./build/bench_noop --list
+```
+
+Run a specific case:
+```
+./build/bench_noop --case noop [out.csv] [iters] [warmup]
+```
+
 Defaults:
 - out.csv: `raw.csv`
 - iters: `10000`

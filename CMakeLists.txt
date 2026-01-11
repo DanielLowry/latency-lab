@@ -13,7 +13,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(bench_noop
-  bench/noop_main.cpp
+  bench/bench_main.cpp
+  bench/cli.cpp
+  bench/noop_case.cpp
+  bench/registry.cpp
 )
 
 target_include_directories(bench_noop
