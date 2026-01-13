@@ -34,6 +34,7 @@ add_executable(bench_cli_tests
 target_include_directories(bench_cli_tests
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/bench
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 add_test(NAME cli_tests COMMAND bench_cli_tests)
 
@@ -44,10 +45,15 @@ add_executable(bench_registry_tests
 target_include_directories(bench_registry_tests
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/bench
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 add_test(NAME registry_tests COMMAND bench_registry_tests)
 
 add_executable(bench_smoke_tests
   tests/smoke_tests.cpp
+)
+target_include_directories(bench_smoke_tests
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 add_test(NAME smoke_tests COMMAND bench_smoke_tests $<TARGET_FILE:bench>)

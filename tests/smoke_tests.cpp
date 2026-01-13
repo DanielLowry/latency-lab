@@ -1,3 +1,5 @@
+#include "test_harness.h"
+
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -29,18 +31,16 @@ std::string next_out_dir_name() {
   return "run_" + std::to_string(now) + "_" + std::to_string(counter++);
 }
 
-}  // namespace
-
-int main(int argc, char** argv) {
-  if (argc < 2) {
-    std::cerr << "usage: smoke_tests <bench_exe>\n";
-    return 1;
+bool smoke_noop(int argc, char** argv) {
+  if (argc < 1) {
+    std::cerr << "smoke test requires bench executable path\n";
+    return false;
   }
 
-  const std::filesystem::path bench_path(argv[1]);
+  const std::filesystem::path bench_path(argv[0]);
   if (!std::filesystem::exists(bench_path)) {
     std::cerr << "bench executable not found: " << bench_path << "\n";
-    return 1;
+    return false;
   }
 
   const auto tmp_base =
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
   std::filesystem::create_directories(out_dir, ec);
   if (ec) {
     std::cerr << "failed to create temp dir: " << ec.message() << "\n";
-    return 1;
+    return false;
   }
 
   const std::string cmd = "\"" + bench_path.string() +
@@ -58,35 +58,35 @@ int main(int argc, char** argv) {
                           out_dir.string() + "\"";
   if (std::system(cmd.c_str()) != 0) {
     std::cerr << "bench invocation failed: " << cmd << "\n";
-    return 1;
+    return false;
   }
 
   const auto csv_path = out_dir / "raw.csv";
   std::ifstream in(csv_path);
   if (!in.is_open()) {
     std::cerr << "missing raw.csv at " << csv_path << "\n";
-    return 1;
+    return false;
   }
 
   std::string header;
   if (!std::getline(in, header)) {
     std::cerr << "raw.csv is empty\n";
-    return 1;
+    return false;
   }
   if (header != "iter,ns") {
     std::cerr << "unexpected CSV header: " << header << "\n";
-    return 1;
+    return false;
   }
 
   std::string line;
   if (!std::getline(in, line)) {
     std::cerr << "raw.csv missing data row\n";
-    return 1;
+    return false;
   }
   const auto comma = line.find(',');
   if (comma == std::string::npos) {
     std::cerr << "raw.csv row missing comma: " << line << "\n";
-    return 1;
+    return false;
   }
   const std::string iter_text = line.substr(0, comma);
   const std::string ns_text = line.substr(comma + 1);
@@ -94,11 +94,20 @@ int main(int argc, char** argv) {
   uint64_t ns = 0;
   if (!parse_u64(iter_text, &iter) || !parse_u64(ns_text, &ns)) {
     std::cerr << "raw.csv row not numeric: " << line << "\n";
-    return 1;
+    return false;
   }
 
   std::filesystem::remove_all(out_dir, ec);
 
-  std::cout << "smoke_tests: ok\n";
-  return 0;
+  return true;
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+  const std::vector<TestCase> cases = {
+      {"noop_smoke", smoke_noop},
+  };
+
+  return run_named_tests(cases, argc, argv);
 }
