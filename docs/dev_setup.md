@@ -51,6 +51,20 @@ Named options (preferred for clarity):
 ```
 `--out` writes `raw.csv` into the given directory.
 
+## Verify pinning from the shell
+You can inspect the process affinity from the outside using the PID.
+```
+./build/bench --pin 2 --case noop --iters 10000000 --warmup 0 --out /tmp/bench &
+pid=$!
+grep Cpus_allowed_list /proc/$pid/status
+wait $pid
+```
+
+If `taskset` is available, this is also convenient:
+```
+taskset -pc $pid
+```
+
 Defaults:
 - out.csv: `raw.csv`
 - iters: `10000`
