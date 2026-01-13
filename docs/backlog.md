@@ -61,15 +61,15 @@ This is the execution tracker for Phase 1. It keeps the full phased breakdown of
 
 ## Phase A3 — CLI and run controls
 **CLI flags (minimum)**
-- [ ] `--case <name>`
-- [ ] `--iters N`
-- [ ] `--warmup N`
-- [ ] `--out <dir>`
-- [ ] `--pin <cpu>` (optional)
-- [ ] `--tag <string>` (free-form label: `quiet`, `noise`, `warm`, etc.)
+- [x] `--case <name>`
+- [x] `--iters N`
+- [x] `--warmup N`
+- [x] `--out <dir>`
+- [x] `--pin <cpu>` (optional)
+- [x] `--tag <string>` (free-form label: `quiet`, `noise`, `warm`, etc.)
 
 **Pinning**
-- [ ] Implement CPU affinity (`sched_setaffinity`) behind `--pin`.
+- [x] Implement CPU affinity (`sched_setaffinity`) behind `--pin`.
 
 **Acceptance criteria**
 - [ ] You can run the same case pinned vs unpinned with identical output schema.

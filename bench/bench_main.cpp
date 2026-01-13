@@ -1,10 +1,12 @@
 #include "cli.h"
 #include "csv.h"
+#include "pinning.h"
 #include "registry.h"
 #include "stats.h"
 #include "timer.h"
 
 #include <cstdint>
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -32,8 +34,52 @@ const Case* resolve_case(const std::string& name) {
   return nullptr;
 }
 
+std::string resolve_output_path(const CliOptions& options) {
+  if (!options.out_dir.empty()) {
+    const std::filesystem::path out_dir(options.out_dir);
+    // Keep filenames consistent; out_dir controls placement only.
+    return (out_dir / "raw.csv").string();
+  }
+  return options.out_path;
+}
+
+bool ensure_output_dir(const std::string& out_dir, std::string* error) {
+  if (out_dir.empty()) {
+    return true;
+  }
+  // Create parent directories for --out so the run doesn't fail later.
+  std::error_code ec;
+  std::filesystem::create_directories(out_dir, ec);
+  if (ec) {
+    if (error) {
+      *error = ec.message();
+    }
+    return false;
+  }
+  return true;
+}
+
 // Run the selected case and emit outputs (stdout summary + raw CSV).
 int run_benchmark(const Case& bench_case, const CliOptions& options) {
+  if (options.pin_enabled) {
+    std::string error;
+    // Pin before setup/warmup so the entire run stays on one CPU.
+    if (!pin_to_cpu(options.pin_cpu, &error)) {
+      std::cerr << "failed to pin to cpu " << options.pin_cpu << ": " << error
+                << "\n";
+      return 1;
+    }
+  }
+
+  if (!options.out_dir.empty()) {
+    std::string error;
+    if (!ensure_output_dir(options.out_dir, &error)) {
+      std::cerr << "failed to create output dir " << options.out_dir << ": "
+                << error << "\n";
+      return 1;
+    }
+  }
+
   Ctx ctx;
   if (bench_case.setup) {
     bench_case.setup(&ctx);
@@ -65,8 +111,9 @@ int run_benchmark(const Case& bench_case, const CliOptions& options) {
   std::cout << q.min << "," << q.p50 << "," << q.p95 << "," << q.p99 << ","
             << q.p999 << "," << q.max << "," << q.mean << "\n";
 
-  if (!write_raw_csv(options.out_path, samples)) {
-    std::cerr << "failed to write " << options.out_path << "\n";
+  const std::string out_path = resolve_output_path(options);
+  if (!write_raw_csv(out_path, samples)) {
+    std::cerr << "failed to write " << out_path << "\n";
     return 1;
   }
 

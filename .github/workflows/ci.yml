@@ -16,3 +16,5 @@ jobs:
         run: cmake --preset ninja
       - name: Build
         run: cmake --build --preset ninja
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

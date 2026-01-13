@@ -26,23 +26,30 @@ cmake --build build
 
 ## Run
 ```
-./build/bench_noop
+./build/bench
 ```
 
 Optional arguments:
 ```
-./build/bench_noop [out.csv] [iters] [warmup]
+./build/bench [out.csv] [iters] [warmup]
 ```
 
 List registered cases:
 ```
-./build/bench_noop --list
+./build/bench --list
 ```
 
 Run a specific case:
 ```
-./build/bench_noop --case noop [out.csv] [iters] [warmup]
+./build/bench --case noop [out.csv] [iters] [warmup]
 ```
+
+Named options (preferred for clarity):
+```
+./build/bench --out results --iters 10000 --warmup 1000 --case noop
+./build/bench --pin 2 --tag quiet --tag warm
+```
+`--out` writes `raw.csv` into the given directory.
 
 Defaults:
 - out.csv: `raw.csv`
@@ -52,4 +59,9 @@ Defaults:
 ## Clean
 ```
 cmake --build build --target clean
+```
+
+## Tests
+```
+ctest --test-dir build --output-on-failure
 ```
