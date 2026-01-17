@@ -31,7 +31,7 @@ configure_file(
 )
 
 add_executable(bench
-  bench/bench_main.cpp
+  bench/main.cpp
   bench/cli.cpp
   bench/meta.cpp
   bench/noop_case.cpp
