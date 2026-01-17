@@ -37,6 +37,7 @@ add_executable(bench
   bench/noop_case.cpp
   bench/pinning.cpp
   bench/registry.cpp
+  bench/run_utils.cpp
 )
 
 target_include_directories(bench
