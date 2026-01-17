@@ -36,7 +36,7 @@ This is the execution tracker for Phase 1. It keeps the full phased breakdown of
 - [x] A `noop` case (empty measurement) to estimate timer/loop overhead.
 
 **Acceptance criteria**
-- [ ] You can run a dummy case and produce:
+- [x] You can run a dummy case and produce:
   - printed summary
   - `raw.csv`
 
@@ -44,18 +44,18 @@ This is the execution tracker for Phase 1. It keeps the full phased breakdown of
 
 ## Phase A2 — Case interface + registry
 **Build**
-- [ ] `bench/case.h`
+- [x] `bench/case.h`
   - `struct Case { const char* name; void(*setup)(Ctx*); void(*run_once)(Ctx*); void(*teardown)(Ctx*); };`
-- [ ] `bench/registry.h/.cpp`
+- [x] `bench/registry.h/.cpp`
   - `register_case(const Case&)`
   - `cases()` returns list for enumeration
 
 **Pattern**
-- [ ] Each benchmark lives in its own `.cpp` file and calls a registration macro at static init time.
+- [x] Each benchmark lives in its own `.cpp` file and calls a registration macro at static init time.
 
 **Acceptance criteria**
-- [ ] Add a new benchmark by adding a `.cpp` file — no harness edits required.
-- [ ] CLI can list cases and run one by name.
+- [x] Add a new benchmark by adding a `.cpp` file — no harness edits required.
+- [x] CLI can list cases and run one by name.
 
 ---
 
@@ -72,7 +72,7 @@ This is the execution tracker for Phase 1. It keeps the full phased breakdown of
 - [x] Implement CPU affinity (`sched_setaffinity`) behind `--pin`.
 
 **Acceptance criteria**
-- [ ] You can run the same case pinned vs unpinned with identical output schema.
+- [x] You can run the same case pinned vs unpinned with identical output schema.
 
 ---
 
