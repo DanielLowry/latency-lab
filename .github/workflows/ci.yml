@@ -18,3 +18,19 @@ jobs:
         run: cmake --build --preset ninja
       - name: Test
         run: ctest --test-dir build -V
+      - name: Benchmark Report
+        run: |
+          set -euo pipefail
+          iters="${BENCH_ITERS:-5000}"
+          warmup="${BENCH_WARMUP:-500}"
+          out_base="$(mktemp -d)"
+          echo "bench output dir: ${out_base}"
+          ./build/bench --list
+          while IFS= read -r case_name; do
+            if [ -z "${case_name}" ]; then
+              continue
+            fi
+            out_dir="${out_base}/${case_name}"
+            echo "== ${case_name} =="
+            ./build/bench --case "${case_name}" --iters "${iters}" --warmup "${warmup}" --out "${out_dir}" --tag ci
+          done < <(./build/bench --list)
