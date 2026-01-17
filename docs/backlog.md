@@ -122,9 +122,9 @@ results/
 ## Phase A6 — Implement Lab A (first real consumer)
 Implement these cases first:
 
-1. [ ] `fork_wait`
+1. [x] `fork_wait`
    - parent forks, child `_exit(0)`, parent `waitpid()`
-2. [ ] `fork_exec_wait`
+2. [x] `fork_exec_wait`
    - child `execv("./child_exec")` where `child_exec` does almost nothing
 
 **Outputs**

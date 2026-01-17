@@ -6,6 +6,9 @@ const Case* resolve_case(const std::string& name) {
   if (!name.empty()) {
     return find_case(name);
   }
+  if (const Case* noop_case = find_case("noop")) {
+    return noop_case;
+  }
   const auto& all_cases = cases();
   if (!all_cases.empty()) {
     return all_cases.front();

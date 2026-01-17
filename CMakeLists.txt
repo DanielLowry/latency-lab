@@ -33,6 +33,8 @@ configure_file(
 add_executable(bench
   bench/main.cpp
   bench/cli.cpp
+  bench/fork_exec_wait_case.cpp
+  bench/fork_wait_case.cpp
   bench/meta.cpp
   bench/noop_case.cpp
   bench/pinning.cpp
@@ -44,6 +46,10 @@ target_include_directories(bench
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/bench
     ${LATENCY_LAB_GENERATED_DIR}
+)
+
+add_executable(child_exec
+  bench/child_exec.cpp
 )
 
 enable_testing()
