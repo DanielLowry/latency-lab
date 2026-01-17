@@ -170,9 +170,15 @@ bool smoke_noop(int argc, char** argv) {
     std::cerr << "missing stdout.txt at " << stdout_path << "\n";
     return false;
   }
-  if (stdout_contents.find("min,p50,p95,p99,p999,max,mean") ==
+  if (stdout_contents.find("min=") == std::string::npos ||
+      stdout_contents.find("p50=") == std::string::npos ||
+      stdout_contents.find("mean=") == std::string::npos) {
+    std::cerr << "stdout.txt missing human summary line\n";
+    return false;
+  }
+  if (stdout_contents.find("min,p50,p95,p99,p999,max,mean") !=
       std::string::npos) {
-    std::cerr << "stdout.txt missing summary header\n";
+    std::cerr << "stdout.txt should not include CSV summary by default\n";
     return false;
   }
 

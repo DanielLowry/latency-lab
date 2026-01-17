@@ -5,6 +5,11 @@
 #include <string>
 #include <vector>
 
+enum class SummaryFormat {
+  kHuman,
+  kCsv,
+};
+
 // CLI options are kept separate from the benchmark harness for clarity.
 struct CliOptions {
   // If out_dir is set, raw.csv is written inside that directory.
@@ -18,6 +23,7 @@ struct CliOptions {
   int pin_cpu = -1;
   // Tags are captured for metadata; harness does not interpret them yet.
   std::vector<std::string> tags;
+  SummaryFormat summary_format = SummaryFormat::kHuman;
 };
 
 // Parse result bundles options with simple status flags for main().

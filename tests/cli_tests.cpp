@@ -42,7 +42,7 @@ bool test_named_options(int, char**) {
   const auto result =
       parse_args({"bench", "--case", "noop", "--iters", "42", "--warmup", "7",
                   "--out", "results", "--pin", "2", "--tag", "quiet", "--tag",
-                  "warm"});
+                  "warm", "--summary-format", "csv"});
   CHECK(result.ok);
   CHECK(result.options.case_name == "noop");
   CHECK(result.options.iters == 42);
@@ -53,6 +53,7 @@ bool test_named_options(int, char**) {
   CHECK(result.options.tags.size() == 2);
   CHECK(result.options.tags[0] == "quiet");
   CHECK(result.options.tags[1] == "warm");
+  CHECK(result.options.summary_format == SummaryFormat::kCsv);
   return true;
 }
 
@@ -83,6 +84,19 @@ bool test_too_many_positionals(int, char**) {
   return true;
 }
 
+bool test_summary_format_default(int, char**) {
+  const auto result = parse_args({"bench"});
+  CHECK(result.ok);
+  CHECK(result.options.summary_format == SummaryFormat::kHuman);
+  return true;
+}
+
+bool test_summary_format_invalid(int, char**) {
+  const auto result = parse_args({"bench", "--summary-format", "bogus"});
+  CHECK(!result.ok);
+  return true;
+}
+
 #undef CHECK
 
 }  // namespace
@@ -96,6 +110,8 @@ int main(int argc, char** argv) {
       {"missing_iters_value", test_missing_iters_value},
       {"negative_pin", test_negative_pin},
       {"too_many_positionals", test_too_many_positionals},
+      {"summary_format_default", test_summary_format_default},
+      {"summary_format_invalid", test_summary_format_invalid},
   };
 
   return run_named_tests(cases, argc, argv);

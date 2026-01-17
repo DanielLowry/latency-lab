@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -80,12 +81,44 @@ bool write_text_file_atomic(const std::string& path,
   return true;
 }
 
-std::string format_summary(const Case& bench_case, const Quantiles& q) {
+std::string format_ns(double ns) {
+  double value = ns;
+  const char* unit = "ns";
+  if (value >= 1e9) {
+    value /= 1e9;
+    unit = "s";
+  } else if (value >= 1e6) {
+    value /= 1e6;
+    unit = "ms";
+  } else if (value >= 1e3) {
+    value /= 1e3;
+    unit = "us";
+  }
+
+  std::ostringstream out;
+  out << std::fixed << std::setprecision(2) << value << " " << unit;
+  return out.str();
+}
+
+std::string format_summary(const Case& bench_case,
+                           const Quantiles& q,
+                           SummaryFormat format) {
   std::ostringstream out;
   out << bench_case.name << "\n";
-  out << "min,p50,p95,p99,p999,max,mean\n";
-  out << q.min << "," << q.p50 << "," << q.p95 << "," << q.p99 << "," << q.p999
-      << "," << q.max << "," << q.mean << "\n";
+  if (format == SummaryFormat::kCsv) {
+    out << "min,p50,p95,p99,p999,max,mean\n";
+    out << q.min << "," << q.p50 << "," << q.p95 << "," << q.p99 << ","
+        << q.p999 << "," << q.max << "," << q.mean << "\n";
+    return out.str();
+  }
+
+  out << "min=" << format_ns(static_cast<double>(q.min))
+      << " p50=" << format_ns(static_cast<double>(q.p50))
+      << " p95=" << format_ns(static_cast<double>(q.p95))
+      << " p99=" << format_ns(static_cast<double>(q.p99))
+      << " p999=" << format_ns(static_cast<double>(q.p999))
+      << " max=" << format_ns(static_cast<double>(q.max))
+      << " mean=" << format_ns(q.mean) << "\n";
   return out.str();
 }
 
@@ -144,7 +177,8 @@ int run_benchmark(const Case& bench_case,
   }
 
   const Quantiles q = compute_quantiles(samples);
-  const std::string summary = format_summary(bench_case, q);
+  const std::string summary =
+      format_summary(bench_case, q, options.summary_format);
   std::cout << summary;
 
   if (!options.out_dir.empty()) {

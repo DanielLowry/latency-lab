@@ -16,8 +16,9 @@ This document defines the timed region, output schema, and required metadata for
 - `ns` is the elapsed time per iteration in nanoseconds (`uint64_t`).
 
 ### stdout summary
-- Print quantiles: `min,p50,p95,p99,p999,max`.
-- Optional: include `mean` if convenient.
+- By default, print a human-readable line with units (2dp) that includes
+  `min,p50,p95,p99,p999,max,mean`.
+- Use `--summary-format csv` to print the CSV header + row in nanoseconds.
 
 ### `meta.json`
 Required keys:

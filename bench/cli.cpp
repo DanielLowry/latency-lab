@@ -45,6 +45,21 @@ uint64_t parse_u64_lenient(const char* arg, uint64_t fallback) {
   return value;
 }
 
+bool parse_summary_format(const std::string& arg, SummaryFormat* format) {
+  if (!format) {
+    return false;
+  }
+  if (arg == "human") {
+    *format = SummaryFormat::kHuman;
+    return true;
+  }
+  if (arg == "csv") {
+    *format = SummaryFormat::kCsv;
+    return true;
+  }
+  return false;
+}
+
 }  // namespace
 
 CliParseResult parse_cli_args(int argc, char** argv) {
@@ -122,6 +137,19 @@ CliParseResult parse_cli_args(int argc, char** argv) {
         return result;
       }
       result.options.tags.push_back(argv[++i]);
+    } else if (arg == "--summary-format") {
+      if (i + 1 >= argc) {
+        result.ok = false;
+        result.error = "--summary-format requires a value";
+        return result;
+      }
+      SummaryFormat format = SummaryFormat::kHuman;
+      if (!parse_summary_format(argv[++i], &format)) {
+        result.ok = false;
+        result.error = "--summary-format expects 'human' or 'csv'";
+        return result;
+      }
+      result.options.summary_format = format;
     } else if (arg == "--help" || arg == "-h") {
       result.show_help = true;
       return result;
@@ -158,5 +186,6 @@ CliParseResult parse_cli_args(int argc, char** argv) {
 void print_usage(const char* argv0, std::ostream& out) {
   out << "usage: " << argv0
       << " [--list] [--case name] [--out dir] [--iters N] [--warmup N]"
-         " [--pin cpu] [--tag label] [out.csv] [iters] [warmup]\n";
+         " [--pin cpu] [--tag label] [--summary-format human|csv]"
+         " [out.csv] [iters] [warmup]\n";
 }
