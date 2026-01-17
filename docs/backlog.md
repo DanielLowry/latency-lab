@@ -78,7 +78,7 @@ This is the execution tracker for Phase 1. It keeps the full phased breakdown of
 
 ## Phase A4 — Metadata capture
 **Deliverable**
-- [ ] `meta.json` written to the output directory containing at least:
+- [x] `meta.json` written to the output directory containing at least:
   - CPU model + core count
   - kernel version
   - command line used
@@ -87,16 +87,16 @@ This is the execution tracker for Phase 1. It keeps the full phased breakdown of
   - tag(s): `quiet/noise`, `warm/cold`, etc.
 
 **Note**
-- [ ] Keep this minimal but consistent. You can always add keys later.
+- [x] Keep this minimal but consistent. You can always add keys later.
 
 **Acceptance criteria**
-- [ ] Every run folder contains `meta.json`, `stdout.txt`, and `raw.csv`.
+- [x] Every run folder contains `meta.json`, `stdout.txt`, and `raw.csv`.
 
 ---
 
 ## Phase A5 — Results folder convention + optional runner script
 **Folder convention**
-- [ ] Use the recommended layout:
+- [x] Use the recommended layout:
 
 ```
 results/
@@ -109,13 +109,13 @@ results/
 ```
 
 **Optional: tiny Python runner**
-- [ ] A small script can:
+- [x] A small script can:
   - create the run directory
   - execute the binary with chosen args
   - capture stdout/stderr into `stdout.txt`
 
 **Note**
-- [ ] This is intentionally file-based (not database-backed). A DB can be layered on later by crawling `meta.json` files if needed.
+- [x] This is intentionally file-based (not database-backed). A DB can be layered on later by crawling `meta.json` files if needed.
 
 ---
 

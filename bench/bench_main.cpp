@@ -1,13 +1,19 @@
 #include "cli.h"
 #include "csv.h"
+#include "meta.h"
 #include "pinning.h"
 #include "registry.h"
 #include "stats.h"
 #include "timer.h"
 
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -43,6 +49,22 @@ std::string resolve_output_path(const CliOptions& options) {
   return options.out_path;
 }
 
+std::string resolve_meta_path(const CliOptions& options) {
+  if (options.out_dir.empty()) {
+    return "";
+  }
+  const std::filesystem::path out_dir(options.out_dir);
+  return (out_dir / "meta.json").string();
+}
+
+std::string resolve_stdout_path(const CliOptions& options) {
+  if (options.out_dir.empty()) {
+    return "";
+  }
+  const std::filesystem::path out_dir(options.out_dir);
+  return (out_dir / "stdout.txt").string();
+}
+
 bool ensure_output_dir(const std::string& out_dir, std::string* error) {
   if (out_dir.empty()) {
     return true;
@@ -59,8 +81,54 @@ bool ensure_output_dir(const std::string& out_dir, std::string* error) {
   return true;
 }
 
+bool write_text_file_atomic(const std::string& path,
+                            const std::string& contents,
+                            std::string* error) {
+  const std::string tmp_path = path + ".tmp";
+  std::ofstream out(tmp_path, std::ios::out | std::ios::trunc);
+  if (!out.is_open()) {
+    if (error) {
+      *error = std::strerror(errno);
+    }
+    return false;
+  }
+  out << contents;
+  out.flush();
+  if (!out.good()) {
+    if (error) {
+      *error = "failed to write file";
+    }
+    std::remove(tmp_path.c_str());
+    return false;
+  }
+  out.close();
+
+  if (std::rename(tmp_path.c_str(), path.c_str()) != 0) {
+    std::remove(path.c_str());
+    if (std::rename(tmp_path.c_str(), path.c_str()) != 0) {
+      if (error) {
+        *error = std::strerror(errno);
+      }
+      std::remove(tmp_path.c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
+std::string format_summary(const Case& bench_case, const Quantiles& q) {
+  std::ostringstream out;
+  out << bench_case.name << "\n";
+  out << "min,p50,p95,p99,p999,max,mean\n";
+  out << q.min << "," << q.p50 << "," << q.p95 << "," << q.p99 << "," << q.p999
+      << "," << q.max << "," << q.mean << "\n";
+  return out.str();
+}
+
 // Run the selected case and emit outputs (stdout summary + raw CSV).
-int run_benchmark(const Case& bench_case, const CliOptions& options) {
+int run_benchmark(const Case& bench_case,
+                  const CliOptions& options,
+                  const std::string& command_line) {
   if (options.pin_enabled) {
     std::string error;
     // Pin before setup/warmup so the entire run stays on one CPU.
@@ -79,6 +147,12 @@ int run_benchmark(const Case& bench_case, const CliOptions& options) {
       return 1;
     }
   }
+
+  RunMetadata meta = collect_system_metadata();
+  meta.command_line = command_line;
+  meta.pinning = options.pin_enabled;
+  meta.pinned_cpu = options.pin_cpu;
+  meta.tags = options.tags;
 
   Ctx ctx;
   if (bench_case.setup) {
@@ -106,15 +180,31 @@ int run_benchmark(const Case& bench_case, const CliOptions& options) {
   }
 
   const Quantiles q = compute_quantiles(samples);
-  std::cout << bench_case.name << "\n";
-  std::cout << "min,p50,p95,p99,p999,max,mean\n";
-  std::cout << q.min << "," << q.p50 << "," << q.p95 << "," << q.p99 << ","
-            << q.p999 << "," << q.max << "," << q.mean << "\n";
+  const std::string summary = format_summary(bench_case, q);
+  std::cout << summary;
+
+  if (!options.out_dir.empty()) {
+    const std::string stdout_path = resolve_stdout_path(options);
+    std::string error;
+    if (!write_text_file_atomic(stdout_path, summary, &error)) {
+      std::cerr << "failed to write " << stdout_path << ": " << error << "\n";
+      return 1;
+    }
+  }
 
   const std::string out_path = resolve_output_path(options);
   if (!write_raw_csv(out_path, samples)) {
     std::cerr << "failed to write " << out_path << "\n";
     return 1;
+  }
+
+  if (!options.out_dir.empty()) {
+    const std::string meta_path = resolve_meta_path(options);
+    std::string error;
+    if (!write_meta_json(meta_path, meta, &error)) {
+      std::cerr << "failed to write " << meta_path << ": " << error << "\n";
+      return 1;
+    }
   }
 
   return 0;
@@ -153,5 +243,6 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  return run_benchmark(*bench_case, parse.options);
+  const std::string command_line = format_command_line(argc, argv);
+  return run_benchmark(*bench_case, parse.options, command_line);
 }

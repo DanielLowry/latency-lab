@@ -12,9 +12,26 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(CMAKE_BUILD_TYPE)
+  set(LATENCY_LAB_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
+else()
+  set(LATENCY_LAB_BUILD_TYPE "unknown")
+endif()
+
+set(LATENCY_LAB_BUILD_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}")
+string(STRIP "${LATENCY_LAB_BUILD_FLAGS}" LATENCY_LAB_BUILD_FLAGS)
+string(REPLACE "\"" "\\\"" LATENCY_LAB_BUILD_FLAGS_ESCAPED "${LATENCY_LAB_BUILD_FLAGS}")
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/bench/build_info.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/bench/build_info.h
+  @ONLY
+)
+
 add_executable(bench
   bench/bench_main.cpp
   bench/cli.cpp
+  bench/meta.cpp
   bench/noop_case.cpp
   bench/pinning.cpp
   bench/registry.cpp
@@ -23,6 +40,7 @@ add_executable(bench
 target_include_directories(bench
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/bench
+    ${CMAKE_CURRENT_BINARY_DIR}/bench
 )
 
 enable_testing()

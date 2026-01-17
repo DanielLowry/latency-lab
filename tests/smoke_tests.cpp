@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <ctime>
 #include <vector>
@@ -29,6 +30,25 @@ bool parse_u64(const std::string& text, uint64_t* value) {
     return false;
   }
   *value = static_cast<uint64_t>(parsed);
+  return true;
+}
+
+bool read_file_contents(const std::filesystem::path& path,
+                        std::string* contents,
+                        std::string* error) {
+  if (!contents) {
+    return false;
+  }
+  std::ifstream in(path);
+  if (!in.is_open()) {
+    if (error) {
+      *error = "failed to open " + path.string();
+    }
+    return false;
+  }
+  std::ostringstream out;
+  out << in.rdbuf();
+  *contents = out.str();
   return true;
 }
 
@@ -118,6 +138,41 @@ bool smoke_noop(int argc, char** argv) {
   uint64_t ns = 0;
   if (!parse_u64(iter_text, &iter) || !parse_u64(ns_text, &ns)) {
     std::cerr << "raw.csv row not numeric: " << line << "\n";
+    return false;
+  }
+
+  const auto meta_path = out_dir / "meta.json";
+  std::string meta_contents;
+  if (!read_file_contents(meta_path, &meta_contents, &error)) {
+    std::cerr << "missing meta.json at " << meta_path << "\n";
+    return false;
+  }
+  const std::vector<std::string> required_keys = {
+      "\"cpu_model\"",
+      "\"cpu_cores\"",
+      "\"kernel_version\"",
+      "\"command_line\"",
+      "\"compiler_version\"",
+      "\"build_flags\"",
+      "\"pinning\"",
+      "\"tags\"",
+  };
+  for (const auto& key : required_keys) {
+    if (meta_contents.find(key) == std::string::npos) {
+      std::cerr << "meta.json missing key: " << key << "\n";
+      return false;
+    }
+  }
+
+  const auto stdout_path = out_dir / "stdout.txt";
+  std::string stdout_contents;
+  if (!read_file_contents(stdout_path, &stdout_contents, &error)) {
+    std::cerr << "missing stdout.txt at " << stdout_path << "\n";
+    return false;
+  }
+  if (stdout_contents.find("min,p50,p95,p99,p999,max,mean") ==
+      std::string::npos) {
+    std::cerr << "stdout.txt missing summary header\n";
     return false;
   }
 
@@ -270,6 +325,17 @@ bool smoke_pin_affinity(int argc, char** argv) {
   int status = 0;
   if (waitpid(pid, &status, 0) != pid) {
     std::cerr << "failed waiting for bench process\n";
+    return false;
+  }
+
+  const auto meta_path = out_dir / "meta.json";
+  std::string meta_contents;
+  if (!read_file_contents(meta_path, &meta_contents, &error)) {
+    std::cerr << "missing meta.json at " << meta_path << "\n";
+    return false;
+  }
+  if (meta_contents.find("\"pinned_cpu\"") == std::string::npos) {
+    std::cerr << "meta.json missing pinned_cpu\n";
     return false;
   }
 

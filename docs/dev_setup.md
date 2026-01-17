@@ -49,7 +49,20 @@ Named options (preferred for clarity):
 ./build/bench --out results --iters 10000 --warmup 1000 --case noop
 ./build/bench --pin 2 --tag quiet --tag warm
 ```
-`--out` writes `raw.csv` into the given directory.
+`--out` writes `raw.csv`, `meta.json`, and `stdout.txt` into the given directory.
+
+## Runner script (optional)
+Use the helper script to create the results layout and capture stdout/stderr.
+```
+python3 scripts/run_bench.py --lab os --case noop --iters 10000 --warmup 1000 --tag quiet
+```
+This creates:
+```
+results/<lab>/<case>/<timestamp>_<tag>/
+  raw.csv
+  meta.json
+  stdout.txt
+```
 
 ## Verify pinning from the shell
 You can inspect the process affinity from the outside using the PID.

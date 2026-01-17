@@ -28,7 +28,7 @@ See `docs/architecture.md` for the system design and `docs/backlog.md` for the e
 
 - Build the microbenchmark harness and run controls.
 - Measure tiny OS operations and capture tail latency (p99+).
-- Produce consistent outputs: `raw.csv` + stdout summary today; `meta.json`/`stdout.txt` capture planned in A4/A5.
+- Produce consistent outputs: `raw.csv`, `meta.json`, `stdout.txt`.
 - Support controlled toggles (pinning, noise vs quiet, warmup vs measurement).
 - Start with the single-binary registry approach; keep a migration path to other layouts.
 
@@ -46,5 +46,5 @@ See `docs/architecture.md` for the system design and `docs/backlog.md` for the e
 ## User journeys
 
 - As a lab author, I add a new case by creating a new `.cpp` file that registers itself; no harness edits.
-- As a runner, I execute a case with CLI flags and receive `raw.csv` plus a readable stdout summary (metadata capture is planned).
-- As an analyst, I compare runs using the results folder layout (planned) to understand p50/p95/p99/p999 shifts.
+- As a runner, I execute a case with CLI flags and receive `raw.csv`, `meta.json`, and a readable summary in `stdout.txt`.
+- As an analyst, I compare runs using the results folder layout to understand p50/p95/p99/p999 shifts.
