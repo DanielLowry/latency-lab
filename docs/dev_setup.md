@@ -92,3 +92,7 @@ cmake --build build --target clean
 ```
 ctest --test-dir build --output-on-failure
 ```
+
+## Python tools
+See `docs/python_tools.md` for installing the Python environment, running the
+bench runner script, and using the analysis notebook.

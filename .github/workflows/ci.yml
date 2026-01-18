@@ -19,6 +19,17 @@ jobs:
         run: cmake --build --preset ninja
       - name: Test
         run: ctest --test-dir build -V
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+      - name: Python Tests
+        run: |
+          uv venv
+          uv pip install -r reqs.txt
+          uv run -m pytest tests/python
       - name: Benchmark Report
         run: |
           set -euo pipefail

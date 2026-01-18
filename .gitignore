@@ -11,3 +11,11 @@
 /compile_commands.json
 
 raw.csv
+/results/**/raw.csv
+/results/**/raw.llr.xz
+
+# Python artifacts
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
