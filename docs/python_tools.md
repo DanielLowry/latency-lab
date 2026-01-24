@@ -63,55 +63,9 @@ loading raw samples.
 If you want to launch benchmarks from inside the notebook, use ipywidgets and
 the helper in `scripts/notebook_runner.py`.
 
-Example cell (from `notebooks/analysis.ipynb`):
-```python
-from pathlib import Path
-import sys
-
-import ipywidgets as widgets
-from IPython.display import display, clear_output
-
-repo_root = Path("..").resolve()
-sys.path.append(str(repo_root / "scripts"))
-import notebook_runner as nb
-
-bench_path = repo_root / "build" / "bench"
-results_dir = repo_root / "results"
-
-case = widgets.Dropdown(options=nb.list_cases(bench_path), description="Case")
-lab = widgets.Text(value="os", description="Lab")
-iters = widgets.IntText(value=10000, description="Iters")
-warmup = widgets.IntText(value=1000, description="Warmup")
-pin_cpu = widgets.IntText(value=-1, description="Pin CPU")
-tags = widgets.Text(value="quiet", description="Tags (csv)")
-run_button = widgets.Button(description="Run")
-output = widgets.Output()
-
-def run_clicked(_):
-    with output:
-        clear_output()
-        tag_list = [t.strip() for t in tags.value.split(",") if t.strip()]
-        pin = None if pin_cpu.value < 0 else pin_cpu.value
-        try:
-            result = nb.run_case(
-                bench_path=bench_path,
-                lab=lab.value,
-                case=case.value,
-                results_dir=results_dir,
-                iters=iters.value,
-                warmup=warmup.value,
-                pin_cpu=pin,
-                tags=tag_list,
-            )
-        except Exception as exc:
-            print(f"Run failed: {exc}")
-            return
-        print(f"Run dir: {result.run_dir}")
-        print(result.read_stdout())
-
-run_button.on_click(run_clicked)
-display(widgets.VBox([case, lab, iters, warmup, pin_cpu, tags, run_button]), output)
-```
+The notebook includes a simple runner UI with filterable checkboxes, select-all
+controls, and a "Run selected" button that executes cases sequentially.
+See `notebooks/analysis.ipynb` for the actual widget cell.
 
 ## Tests
 Run Python tests with uv:
