@@ -1,5 +1,6 @@
 jupyterlab
 ipykernel
+ipywidgets
 matplotlib
 pandas
 pytest

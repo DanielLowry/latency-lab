@@ -10,12 +10,15 @@
 /Testing/
 /compile_commands.json
 
+# Benchmark outputs
+/results/
 raw.csv
-/results/**/raw.csv
-/results/**/raw.llr.xz
 
 # Python artifacts
 .venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Jupyter artifacts
+.ipynb_checkpoints/
