@@ -1,7 +1,10 @@
 #include "case.h"
 #include "registry.h"
 
-#if defined(__unix__) || defined(__APPLE__)
+#if !defined(__linux__)
+static_assert(false, "fork_exec_wait is supported only on Linux.");
+#else
+
 #include <cerrno>
 #include <cstdlib>
 #include <filesystem>
@@ -9,44 +12,45 @@
 #include <string>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <vector>
-#endif
 
 namespace {
 
-#if defined(__unix__) || defined(__APPLE__)
 std::string g_child_exec_path;
 
 std::string find_child_exec_path(std::string* error) {
-  std::vector<std::filesystem::path> candidates;
-#if defined(__linux__)
-  char buffer[4096];
-  const ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
-  if (len > 0) {
-    buffer[len] = '\0';
-    const std::filesystem::path exe_path(buffer);
-    candidates.push_back(exe_path.parent_path() / "child_exec");
-  }
-#endif
-  std::error_code ec;
-  const auto cwd = std::filesystem::current_path(ec);
-  if (!ec) {
-    candidates.push_back(cwd / "child_exec");
-  }
-
-  for (const auto& candidate : candidates) {
+  const char* override_path = std::getenv("LATENCY_LAB_CHILD_EXEC");
+  if (override_path && *override_path) {
+    const std::filesystem::path candidate(override_path);
     std::error_code exists_ec;
     if (std::filesystem::exists(candidate, exists_ec) && !exists_ec) {
       return candidate.string();
     }
+    if (error) {
+      *error =
+          "LATENCY_LAB_CHILD_EXEC was set but does not exist: " +
+          candidate.string();
+    }
+    return "";
   }
 
-  if (error) {
-    std::string message = "child_exec not found. Looked in:";
-    for (const auto& candidate : candidates) {
-      message += " " + candidate.string();
+  char buffer[4096];
+  const ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+  if (len <= 0) {
+    if (error) {
+      *error = "failed to resolve /proc/self/exe; set LATENCY_LAB_CHILD_EXEC";
     }
-    *error = message;
+    return "";
+  }
+  buffer[len] = '\0';
+  const std::filesystem::path exe_path(buffer);
+  const std::filesystem::path candidate = exe_path.parent_path() / "child_exec";
+  std::error_code exists_ec;
+  if (std::filesystem::exists(candidate, exists_ec) && !exists_ec) {
+    return candidate.string();
+  }
+  if (error) {
+    *error = "child_exec not found next to bench: " + candidate.string() +
+             " (set LATENCY_LAB_CHILD_EXEC to override)";
   }
   return "";
 }
@@ -81,10 +85,8 @@ const Case kForkExecWaitCase{
     fork_exec_wait_run_once,
     nullptr,
 };
-#endif
 
 }  // namespace
 
-#if defined(__unix__) || defined(__APPLE__)
 LATENCY_LAB_REGISTER_CASE(kForkExecWaitCase);
 #endif

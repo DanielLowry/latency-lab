@@ -16,9 +16,10 @@ This document defines the timed region, output schema, and required metadata for
 - `ns` is the elapsed time per iteration in nanoseconds (`uint64_t`).
 
 ### stdout summary
-- By default, print a human-readable line with units (2dp) that includes
-  `min,p50,p95,p99,p999,max,mean`.
-- Use `--summary-format csv` to print the CSV header + row in nanoseconds.
+- By default, print a human-readable summary with units (2dp) that includes
+  `min,p50,p95,p99,p999,max,mean,iters`.
+- Use `--summary-format csv` to print the CSV header + row in nanoseconds
+  including `iters`.
 
 ### `meta.json`
 Required keys:

@@ -102,23 +102,24 @@ std::string format_ns(double ns) {
 
 std::string format_summary(const Case& bench_case,
                            const Quantiles& q,
+                           uint64_t iters,
                            SummaryFormat format) {
   std::ostringstream out;
-  out << bench_case.name << "\n";
+  out << bench_case.name << " (iters=" << iters << ")\n";
   if (format == SummaryFormat::kCsv) {
-    out << "min,p50,p95,p99,p999,max,mean\n";
+    out << "min,p50,p95,p99,p999,max,mean,iters\n";
     out << q.min << "," << q.p50 << "," << q.p95 << "," << q.p99 << ","
-        << q.p999 << "," << q.max << "," << q.mean << "\n";
+        << q.p999 << "," << q.max << "," << q.mean << "," << iters << "\n";
     return out.str();
   }
 
-  out << "min=" << format_ns(static_cast<double>(q.min))
-      << " p50=" << format_ns(static_cast<double>(q.p50))
-      << " p95=" << format_ns(static_cast<double>(q.p95))
-      << " p99=" << format_ns(static_cast<double>(q.p99))
-      << " p999=" << format_ns(static_cast<double>(q.p999))
-      << " max=" << format_ns(static_cast<double>(q.max))
-      << " mean=" << format_ns(q.mean) << "\n";
+  out << "min=" << format_ns(static_cast<double>(q.min)) << "\n"
+      << "p50=" << format_ns(static_cast<double>(q.p50)) << "\n"
+      << "p95=" << format_ns(static_cast<double>(q.p95)) << "\n"
+      << "p99=" << format_ns(static_cast<double>(q.p99)) << "\n"
+      << "p999=" << format_ns(static_cast<double>(q.p999)) << "\n"
+      << "max=" << format_ns(static_cast<double>(q.max)) << "\n"
+      << "mean=" << format_ns(q.mean) << "\n";
   return out.str();
 }
 
@@ -178,7 +179,7 @@ int run_benchmark(const Case& bench_case,
 
   const Quantiles q = compute_quantiles(samples);
   const std::string summary =
-      format_summary(bench_case, q, options.summary_format);
+      format_summary(bench_case, q, options.iters, options.summary_format);
   std::cout << summary;
 
   if (!options.out_dir.empty()) {

@@ -36,8 +36,8 @@ Tradeoffs:
 - The timed region is only `run_once()` for a case; setup/teardown is excluded.
 - Store samples in nanoseconds (`uint64_t`).
 - Use a monotonic clock (`clock_gettime(CLOCK_MONOTONIC_RAW, ...)` on Linux; fallback to `std::chrono` if needed).
-- Produce consistent outputs every run: `raw.csv`, `meta.json`, and a stdout summary with `min,p50,p95,p99,p999,max`.
-- The stdout summary may also include an optional mean.
+- Produce consistent outputs every run: `raw.csv`, `meta.json`, and a stdout summary with `min,p50,p95,p99,p999,max,mean,iters`.
+- The stdout summary includes mean and iteration count for quick sanity checks.
 - The harness is extensible without edits to core code: adding a case is a new file with a registration macro.
 - Avoid per-iteration overhead in the hot path; keep the case interface lightweight and avoid `std::function`.
 
@@ -53,7 +53,7 @@ Tradeoffs:
   - compiler version and build flags
   - pinning status and CPU index (if used)
   - tags (e.g., `quiet`, `noise`, `warm`, `cold`)
-- `stdout.txt`: human-readable summary with quantiles.
+- `stdout.txt`: human-readable summary with quantiles (one per line).
 
 Note: keep `meta.json` minimal but consistent; add keys later as needed.
 
