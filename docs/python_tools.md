@@ -65,6 +65,8 @@ the helper in `scripts/notebook_runner.py`.
 
 The notebook includes a simple runner UI with filterable checkboxes, select-all
 controls, and a "Run selected" button that executes cases sequentially.
+An update mode control lets you append new rows (default), skip summary/index
+updates, or replace matching rows in `results/index.csv`.
 See `notebooks/analysis.ipynb` for the actual widget cell.
 
 ## Tests

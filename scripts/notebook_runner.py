@@ -66,6 +66,7 @@ def run_case(
     warmup: int = 1000,
     pin_cpu: int | None = None,
     tags: Iterable[str] | None = None,
+    update_mode: str = "append",
     extra_args: Iterable[str] | None = None,
 ) -> RunResult:
     bench_path = _resolve_from_root(Path(bench_path))
@@ -87,6 +88,8 @@ def run_case(
         str(iters),
         "--warmup",
         str(warmup),
+        "--update-mode",
+        update_mode,
     ]
     if pin_cpu is not None:
         cmd += ["--pin", str(pin_cpu)]

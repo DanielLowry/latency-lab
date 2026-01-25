@@ -1,0 +1,8 @@
+noop (iters=10000)
+min=14.00 ns
+p50=16.00 ns
+p95=17.00 ns
+p99=17.00 ns
+p999=18.00 ns
+max=98.00 ns
+mean=15.97 ns

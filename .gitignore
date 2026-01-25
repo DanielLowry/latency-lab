@@ -11,8 +11,8 @@
 /compile_commands.json
 
 # Benchmark outputs
-/results/
 raw.csv
+/results/**/raw.csv
 
 # Python artifacts
 .venv/

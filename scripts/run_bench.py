@@ -71,6 +71,15 @@ def parse_args() -> argparse.Namespace:
         help="Delete raw.csv after compression.",
     )
     parser.add_argument(
+        "--update-mode",
+        choices=["append", "skip", "replace"],
+        default="append",
+        help=(
+            "How to update summary/index outputs: append (default), "
+            "skip (no summary/index), or replace (drop older matching rows)."
+        ),
+    )
+    parser.add_argument(
         "bench_args",
         nargs=argparse.REMAINDER,
         help="Additional args passed to bench (prefix with --).",
@@ -130,35 +139,47 @@ def write_summary_csv(path: Path, row: dict) -> None:
         writer.writerow(row)
 
 
+INDEX_FIELDS = [
+    "lab",
+    "case",
+    "tags",
+    "iters",
+    "warmup",
+    "pin_cpu",
+    "unit",
+    "min",
+    "p50",
+    "p95",
+    "p99",
+    "p999",
+    "max",
+    "mean",
+    "run_dir",
+    "summary_path",
+    "meta_path",
+    "stdout_path",
+    "raw_csv_path",
+    "raw_llr_path",
+    "raw_unit",
+    "bench_path",
+    "bench_args",
+    "started_at",
+]
+
+INDEX_KEY_FIELDS = [
+    "lab",
+    "case",
+    "tags",
+    "iters",
+    "warmup",
+    "pin_cpu",
+    "bench_args",
+]
+
+
 def append_index_csv(path: Path, row: dict) -> None:
-    default_fields = [
-        "lab",
-        "case",
-        "tags",
-        "iters",
-        "warmup",
-        "pin_cpu",
-        "unit",
-        "min",
-        "p50",
-        "p95",
-        "p99",
-        "p999",
-        "max",
-        "mean",
-        "run_dir",
-        "summary_path",
-        "meta_path",
-        "stdout_path",
-        "raw_csv_path",
-        "raw_llr_path",
-        "raw_unit",
-        "bench_path",
-        "bench_args",
-        "started_at",
-    ]
     file_exists = path.exists()
-    fields = default_fields
+    fields = INDEX_FIELDS
     needs_header = not file_exists
     if file_exists:
         with path.open(newline="") as handle:
@@ -177,6 +198,36 @@ def append_index_csv(path: Path, row: dict) -> None:
         if needs_header:
             writer.writeheader()
         writer.writerow(row)
+
+
+def _read_index_rows(path: Path) -> tuple[list[str], list[dict]]:
+    if not path.exists():
+        return INDEX_FIELDS, []
+    with path.open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        rows = list(reader)
+        fields = reader.fieldnames or INDEX_FIELDS
+    return fields, rows
+
+
+def _index_key(row: dict) -> tuple[str, ...]:
+    return tuple(str(row.get(field, "")) for field in INDEX_KEY_FIELDS)
+
+
+def update_index_csv(path: Path, row: dict, mode: str) -> None:
+    if mode == "skip":
+        return
+    if mode == "append":
+        append_index_csv(path, row)
+        return
+    fields, rows = _read_index_rows(path)
+    target = _index_key(row)
+    filtered = [existing for existing in rows if _index_key(existing) != target]
+    filtered.append(row)
+    with path.open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(filtered)
 
 
 def main() -> int:
@@ -257,55 +308,56 @@ def main() -> int:
 
         stats = compute_quantiles(samples)
 
-        summary_path = run_dir / "summary.csv"
         tags_json = json.dumps(args.tag, separators=(",", ":"))
-        summary_row = {
-            "case": args.case,
-            "tags": tags_json,
-            "iters": args.iters,
-            "warmup": args.warmup,
-            "pin_cpu": args.pin if args.pin is not None else -1,
-            "unit": "ns",
-            "min": stats["min"],
-            "p50": stats["p50"],
-            "p95": stats["p95"],
-            "p99": stats["p99"],
-            "p999": stats["p999"],
-            "max": stats["max"],
-            "mean": f"{stats['mean']:.6f}",
-        }
-        write_summary_csv(summary_path, summary_row)
+        if args.update_mode != "skip":
+            summary_path = run_dir / "summary.csv"
+            summary_row = {
+                "case": args.case,
+                "tags": tags_json,
+                "iters": args.iters,
+                "warmup": args.warmup,
+                "pin_cpu": args.pin if args.pin is not None else -1,
+                "unit": "ns",
+                "min": stats["min"],
+                "p50": stats["p50"],
+                "p95": stats["p95"],
+                "p99": stats["p99"],
+                "p999": stats["p999"],
+                "max": stats["max"],
+                "mean": f"{stats['mean']:.6f}",
+            }
+            write_summary_csv(summary_path, summary_row)
 
-        index_path = results_base / "index.csv"
-        index_row = {
-            "lab": args.lab,
-            "case": args.case,
-            "tags": tags_json,
-            "iters": args.iters,
-            "warmup": args.warmup,
-            "pin_cpu": args.pin if args.pin is not None else -1,
-            "unit": "ns",
-            "min": stats["min"],
-            "p50": stats["p50"],
-            "p95": stats["p95"],
-            "p99": stats["p99"],
-            "p999": stats["p999"],
-            "max": stats["max"],
-            "mean": f"{stats['mean']:.6f}",
-            "run_dir": str(run_dir),
-            "summary_path": str(summary_path),
-            "meta_path": str(run_dir / "meta.json"),
-            "stdout_path": str(stdout_path),
-            "raw_csv_path": str(raw_csv_path),
-            "raw_llr_path": str(run_dir / "raw.llr.xz")
-            if args.raw_format != "none"
-            else "",
-            "raw_unit": raw_unit,
-            "bench_path": str(bench_path),
-            "bench_args": json.dumps(extra_args, separators=(",", ":")),
-            "started_at": start_time,
-        }
-        append_index_csv(index_path, index_row)
+            index_path = results_base / "index.csv"
+            index_row = {
+                "lab": args.lab,
+                "case": args.case,
+                "tags": tags_json,
+                "iters": args.iters,
+                "warmup": args.warmup,
+                "pin_cpu": args.pin if args.pin is not None else -1,
+                "unit": "ns",
+                "min": stats["min"],
+                "p50": stats["p50"],
+                "p95": stats["p95"],
+                "p99": stats["p99"],
+                "p999": stats["p999"],
+                "max": stats["max"],
+                "mean": f"{stats['mean']:.6f}",
+                "run_dir": str(run_dir),
+                "summary_path": str(summary_path),
+                "meta_path": str(run_dir / "meta.json"),
+                "stdout_path": str(stdout_path),
+                "raw_csv_path": str(raw_csv_path),
+                "raw_llr_path": str(run_dir / "raw.llr.xz")
+                if args.raw_format != "none"
+                else "",
+                "raw_unit": raw_unit,
+                "bench_path": str(bench_path),
+                "bench_args": json.dumps(extra_args, separators=(",", ":")),
+                "started_at": start_time,
+            }
+            update_index_csv(index_path, index_row, args.update_mode)
 
         if args.raw_drop_csv and args.raw_format != "none":
             raw_csv_path.unlink()
