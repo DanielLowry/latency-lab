@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import asyncio
+
 import ipywidgets as widgets
 from IPython.display import clear_output, display
 
@@ -30,15 +32,17 @@ class RunnerUI:
         *,
         bench_path: Path,
         results_dir: Path,
+        auto_load: bool = True,
     ) -> None:
         self.bench_path = Path(bench_path)
         self.results_dir = Path(results_dir)
         self.case_rows: dict[str, dict] = {}
         self.output = widgets.Output()
 
+        self.status = widgets.HTML("")
         self.filter_text = widgets.Text(value="", description="Filter")
         self.lab = widgets.Text(value="os", description="Lab")
-        self.tags = widgets.Text(value="quiet", description="Tags (csv)")
+        self.tags = widgets.Text(value="", description="Tags (csv)")
         self.tags_help = widgets.HTML(
             "Tags are free-form labels used only for naming runs and filtering results."
         )
@@ -80,16 +84,25 @@ class RunnerUI:
             layout=widgets.Layout(align_items="center"),
         )
 
-        self._load_cases()
+        if auto_load:
+            self._load_cases()
         self._wire_events()
 
+    def load_cases(self) -> None:
+        self._load_cases()
+
     def _load_cases(self) -> None:
+        self.status.value = "<em>Loading cases...</em>"
         try:
             cases = nb.list_cases(self.bench_path)
         except Exception as exc:
             cases = ["noop"]
-            print(f"Could not list cases: {exc}")
-            print(f"Build bench at {self.bench_path} to populate the list.")
+            self.status.value = (
+                f"<b>Could not list cases:</b> {exc}<br>"
+                f"Build bench at {self.bench_path} to populate the list."
+            )
+        else:
+            self.status.value = ""
 
         self.case_rows = {name: self._make_case_row(name) for name in cases}
         self.rows_box.children = [entry["row"] for entry in self.case_rows.values()]
@@ -277,6 +290,7 @@ class RunnerUI:
     def build(self) -> tuple[widgets.Widget, widgets.Output]:
         ui = widgets.VBox(
             [
+                self.status,
                 self.filter_text,
                 widgets.HBox([self.select_all, self.deselect_all, self.run_button]),
                 self.cases_header,
@@ -291,12 +305,27 @@ class RunnerUI:
         return ui, self.output
 
 
-def build_runner_ui(*, bench_path: Path, results_dir: Path) -> tuple[widgets.Widget, widgets.Output]:
-    runner = RunnerUI(bench_path=bench_path, results_dir=results_dir)
-    return runner.build()
+def build_runner_ui(*, bench_path: Path, results_dir: Path, auto_load: bool = True) -> tuple[widgets.Widget, widgets.Output, RunnerUI]:
+    runner = RunnerUI(bench_path=bench_path, results_dir=results_dir, auto_load=auto_load)
+    ui, output = runner.build()
+    return ui, output, runner
 
 
-def display_runner_ui(*, bench_path: Path, results_dir: Path) -> tuple[widgets.Widget, widgets.Output]:
-    ui, output = build_runner_ui(bench_path=bench_path, results_dir=results_dir)
+def display_runner_ui(*, bench_path: Path, results_dir: Path, auto_load: bool = True) -> tuple[widgets.Widget, widgets.Output, RunnerUI]:
+    ui, output, runner = build_runner_ui(
+        bench_path=bench_path,
+        results_dir=results_dir,
+        auto_load=auto_load,
+    )
     display(ui, output)
-    return ui, output
+    if auto_load:
+        return ui, output, runner
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.call_soon(runner.load_cases)
+        else:
+            runner.load_cases()
+    except RuntimeError:
+        runner.load_cases()
+    return ui, output, runner
