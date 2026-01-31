@@ -32,46 +32,49 @@ configure_file(
 
 add_executable(bench
   bench/main.cpp
-  bench/cli.cpp
-  bench/fork_exec_wait_case.cpp
-  bench/fork_wait_case.cpp
-  bench/meta.cpp
-  bench/noop_case.cpp
-  bench/pinning.cpp
-  bench/registry.cpp
-  bench/run_utils.cpp
+  bench/core/cli.cpp
+  bench/cases/fork_exec_wait_case.cpp
+  bench/cases/fork_wait_case.cpp
+  bench/core/meta.cpp
+  bench/cases/noop_case.cpp
+  bench/core/pinning.cpp
+  bench/core/registry.cpp
+  bench/core/run_utils.cpp
 )
 
 target_include_directories(bench
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/bench
+    ${CMAKE_CURRENT_SOURCE_DIR}/bench/core
     ${LATENCY_LAB_GENERATED_DIR}
 )
 
 add_executable(child_exec
-  bench/child_exec.cpp
+  bench/tools/child_exec.cpp
 )
 
 enable_testing()
 
 add_executable(bench_cli_tests
   tests/cli_tests.cpp
-  bench/cli.cpp
+  bench/core/cli.cpp
 )
 target_include_directories(bench_cli_tests
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/bench
+    ${CMAKE_CURRENT_SOURCE_DIR}/bench/core
     ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 add_test(NAME cli_tests COMMAND bench_cli_tests)
 
 add_executable(bench_registry_tests
   tests/registry_tests.cpp
-  bench/registry.cpp
+  bench/core/registry.cpp
 )
 target_include_directories(bench_registry_tests
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/bench
+    ${CMAKE_CURRENT_SOURCE_DIR}/bench/core
     ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 add_test(NAME registry_tests COMMAND bench_registry_tests)

@@ -23,12 +23,12 @@ This is the execution tracker for Phase 1. It keeps the full phased breakdown of
 
 ## Phase A1 — Core harness library (timing + stats + CSV)
 **Build**
-- [x] `bench/timer.h`
+- [x] `bench/core/timer.h`
   - `now_ns()` implementation
-- [x] `bench/stats.h`
+- [x] `bench/core/stats.h`
   - quantiles: min/p50/p95/p99/p999/max
   - Phase 1 approach: collect samples in a vector + sort
-- [x] `bench/csv.h`
+- [x] `bench/core/csv.h`
   - write `raw.csv` safely
 
 **Add immediately**
@@ -44,9 +44,9 @@ This is the execution tracker for Phase 1. It keeps the full phased breakdown of
 
 ## Phase A2 — Case interface + registry
 **Build**
-- [x] `bench/case.h`
+- [x] `bench/core/case.h`
   - `struct Case { const char* name; void(*setup)(Ctx*); void(*run_once)(Ctx*); void(*teardown)(Ctx*); };`
-- [x] `bench/registry.h/.cpp`
+- [x] `bench/core/registry.h/.cpp`
   - `register_case(const Case&)`
   - `cases()` returns list for enumeration
 
