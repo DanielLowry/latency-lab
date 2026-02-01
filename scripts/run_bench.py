@@ -13,6 +13,21 @@ from pathlib import Path
 from raw_format import RawHeader, encode_samples_to_llr, read_raw_csv_list
 
 
+def repo_root() -> Path:
+    return Path(__file__).resolve().parent.parent
+
+
+def resolve_path(path: Path) -> Path:
+    return path.expanduser().resolve(strict=False)
+
+
+def relative_to_root(path: Path, root: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
 def sanitize_tag(tag: str) -> str:
     if not tag:
         return "tag"
@@ -232,19 +247,22 @@ def update_index_csv(path: Path, row: dict, mode: str) -> None:
 
 def main() -> int:
     args = parse_args()
-    bench_path = Path(args.bench)
+    root = repo_root()
+    bench_path = resolve_path(Path(args.bench))
     if not bench_path.exists():
         print(f"bench not found: {bench_path}", file=sys.stderr)
         return 1
 
     start_time = dt.datetime.now().isoformat(timespec="seconds")
-    results_base = Path(args.results)
+    results_base = resolve_path(Path(args.results))
     run_dir = pick_run_dir(results_base, args.lab, args.case, args.tag)
     run_dir.mkdir(parents=True, exist_ok=False)
 
     extra_args: list[str] = []
+    bench_cmd = relative_to_root(bench_path, root)
+    run_dir_cmd = relative_to_root(run_dir, root)
     cmd = [
-        str(bench_path),
+        bench_cmd,
         "--case",
         args.case,
         "--iters",
@@ -252,7 +270,7 @@ def main() -> int:
         "--warmup",
         str(args.warmup),
         "--out",
-        str(run_dir),
+        run_dir_cmd,
     ]
     if args.pin is not None:
         cmd += ["--pin", str(args.pin)]
@@ -270,6 +288,7 @@ def main() -> int:
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        cwd=str(root),
     )
 
     stdout_path = run_dir / "stdout.txt"
@@ -329,6 +348,7 @@ def main() -> int:
             write_summary_csv(summary_path, summary_row)
 
             index_path = results_base / "index.csv"
+            rel = lambda path: relative_to_root(path, root)
             index_row = {
                 "lab": args.lab,
                 "case": args.case,
@@ -344,16 +364,16 @@ def main() -> int:
                 "p999": stats["p999"],
                 "max": stats["max"],
                 "mean": f"{stats['mean']:.6f}",
-                "run_dir": str(run_dir),
-                "summary_path": str(summary_path),
-                "meta_path": str(run_dir / "meta.json"),
-                "stdout_path": str(stdout_path),
-                "raw_csv_path": str(raw_csv_path),
-                "raw_llr_path": str(run_dir / "raw.llr.xz")
+                "run_dir": rel(run_dir),
+                "summary_path": rel(summary_path),
+                "meta_path": rel(run_dir / "meta.json"),
+                "stdout_path": rel(stdout_path),
+                "raw_csv_path": rel(raw_csv_path),
+                "raw_llr_path": rel(run_dir / "raw.llr.xz")
                 if args.raw_format != "none"
                 else "",
                 "raw_unit": raw_unit,
-                "bench_path": str(bench_path),
+                "bench_path": rel(bench_path),
                 "bench_args": json.dumps(extra_args, separators=(",", ":")),
                 "started_at": start_time,
             }

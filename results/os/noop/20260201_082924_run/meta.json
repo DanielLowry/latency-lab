@@ -2,7 +2,7 @@
   "cpu_model": "Intel(R) Core(TM) i5-8600K CPU @ 3.60GHz",
   "cpu_cores": 6,
   "kernel_version": "6.14.0-37-generic",
-  "command_line": "/home/dan/dev/git/latency-lab/build/bench --case noop --iters 10000 --warmup 1000 --out /home/dan/dev/git/latency-lab/results/os/noop/20260201_082924_run",
+  "command_line": "build/bench --case noop --iters 10000 --warmup 1000 --out results/os/noop/20260201_082924_run",
   "compiler_version": "gcc 13.3.0",
   "build_flags": "unknown",
   "pinning": false,
