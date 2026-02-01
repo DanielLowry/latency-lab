@@ -334,6 +334,128 @@ def plot_summary(
     plt.show()
 
 
+def render_summary(
+    *,
+    index,
+    summary_out,
+    summary_metric,
+    summary_hue,
+    summary_lab,
+    summary_tag,
+    summary_max_cases,
+    summary_label_max,
+) -> None:
+    from IPython.display import display, clear_output
+
+    with summary_out:
+        clear_output(wait=True)
+        metric = summary_metric.value
+        if not metric:
+            print("No metric selected.")
+            return
+        filter_lab = None if summary_lab.value == "(all)" else summary_lab.value
+        filter_tag = summary_tag.value.strip() or None
+        max_cases = int(summary_max_cases.value) if summary_max_cases.value else None
+
+        try:
+            result = prepare_summary(
+                index,
+                metric,
+                filter_lab=filter_lab,
+                filter_tag=filter_tag,
+                max_cases=max_cases,
+            )
+        except Exception as exc:
+            print(f"Summary error: {exc}")
+            return
+
+        if result["df"].empty:
+            print("No rows to plot after filtering.")
+            return
+
+        display(result["summary_table"])
+
+        hue_value = summary_hue.value
+        plot_summary(
+            result,
+            metric=metric,
+            hue_value=None if hue_value == "(none)" else hue_value,
+            label_max=int(summary_label_max.value),
+        )
+
+
+def render_case(
+    *,
+    index,
+    case_out,
+    case_name_widget,
+    case_primary_metric,
+    case_metrics_widget,
+    case_config_fields,
+    case_max_configs,
+    case_label_max,
+) -> None:
+    from IPython.display import display, clear_output
+
+    with case_out:
+        clear_output(wait=True)
+        case_name = case_name_widget.value
+        primary_metric = case_primary_metric.value
+        metrics = list(case_metrics_widget.value)
+        config_cols = list(case_config_fields.value)
+        label_max = int(case_label_max.value)
+        max_configs = int(case_max_configs.value)
+
+        try:
+            result = prepare_case(
+                index,
+                case_name,
+                config_columns=config_cols,
+                primary_metric=primary_metric,
+                metrics=metrics,
+            )
+        except Exception as exc:
+            print(f"Case analysis error: {exc}")
+            return
+
+        df = result["df"]
+        case_name = result["case_name"]
+        if df.empty:
+            print(f"No runs found for case: {case_name!r}")
+            return
+
+        config_order = result["config_order"]
+        label_map, _display_order = plot_case_distribution(
+            df,
+            config_order=config_order,
+            primary_metric=primary_metric,
+            unit_label=result["unit_label"],
+            label_max=label_max,
+            title=f"{case_name} by configuration ({primary_metric})",
+        )
+
+        summary_table = result["summary_table"]
+        if summary_table is not None:
+            table = summary_table.reset_index()
+            table["config_display"] = table["config"].map(label_map)
+            table = table[
+                ["config_display", "config", "run_count", "median", "min", "max"]
+            ]
+            display(table)
+
+        metrics = [m for m in metrics if m in df.columns]
+        if metrics:
+            top_configs = config_order[:max_configs] if max_configs else config_order
+            profile = build_profile(df, configs=top_configs, metrics=metrics)
+            if len(profile):
+                profile["config_display"] = profile["config"].map(label_map)
+                plot_profile(
+                    profile,
+                    unit_label=result["unit_label"],
+                    title=f"{case_name} quantile profile (top {len(top_configs)})",
+                )
+
+
 def plot_case_distribution(
     df: pd.DataFrame,
     *,
