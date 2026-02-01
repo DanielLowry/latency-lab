@@ -236,6 +236,9 @@ bool write_meta_json(const std::string& path,
   if (meta.pinning) {
     out << "  \"pinned_cpu\": " << meta.pinned_cpu << ",\n";
   }
+  out << "  \"noise\": " << (meta.noise ? "true" : "false") << ",\n";
+  out << "  \"noise_mode\": \"" << json_escape(meta.noise_mode) << "\",\n";
+  out << "  \"noise_cpu\": " << meta.noise_cpu << ",\n";
   out << "  \"tags\": [";
   for (size_t i = 0; i < meta.tags.size(); ++i) {
     if (i > 0) {

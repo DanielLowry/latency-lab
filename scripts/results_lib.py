@@ -58,6 +58,8 @@ def filter_runs(
     case: str | None = None,
     tag: str | None = None,
     pin_cpu: int | None = None,
+    noise_mode: str | None = None,
+    noise_cpu: int | None = None,
 ):
     try:
         import pandas as pd  # type: ignore
@@ -70,6 +72,10 @@ def filter_runs(
                 out = out[out["tags"].str.contains(tag)]
             if pin_cpu is not None:
                 out = out[out["pin_cpu"] == pin_cpu]
+            if noise_mode is not None and "noise_mode" in out.columns:
+                out = out[out["noise_mode"] == noise_mode]
+            if noise_cpu is not None and "noise_cpu" in out.columns:
+                out = out[out["noise_cpu"] == noise_cpu]
             return out
     except Exception:
         pass
@@ -82,6 +88,10 @@ def filter_runs(
         if tag is not None and tag not in parse_tags(row.get("tags", "")):
             continue
         if pin_cpu is not None and str(pin_cpu) != str(row.get("pin_cpu", "")):
+            continue
+        if noise_mode is not None and str(noise_mode) != str(row.get("noise_mode", "")):
+            continue
+        if noise_cpu is not None and str(noise_cpu) != str(row.get("noise_cpu", "")):
             continue
         filtered.append(row)
     return filtered

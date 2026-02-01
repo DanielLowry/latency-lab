@@ -13,6 +13,9 @@ struct RunMetadata {
   std::string build_flags;
   bool pinning = false;
   int pinned_cpu = -1;
+  bool noise = false;
+  std::string noise_mode = "off";
+  int noise_cpu = -1;
   std::vector<std::string> tags;
 };
 

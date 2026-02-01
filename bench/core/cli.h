@@ -1,5 +1,7 @@
 #pragma once
 
+#include "noise.h"
+
 #include <cstdint>
 #include <ostream>
 #include <string>
@@ -21,6 +23,7 @@ struct CliOptions {
   bool list_cases = false;
   bool pin_enabled = false;
   int pin_cpu = -1;
+  NoiseMode noise_mode = NoiseMode::kOff;
   // Tags are captured for metadata; harness does not interpret them yet.
   std::vector<std::string> tags;
   SummaryFormat summary_format = SummaryFormat::kHuman;

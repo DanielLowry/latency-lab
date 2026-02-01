@@ -67,6 +67,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--iters", type=int, default=10000, help="Iterations")
     parser.add_argument("--warmup", type=int, default=1000, help="Warmup iterations")
     parser.add_argument("--pin", type=int, help="CPU index to pin")
+    parser.add_argument(
+        "--noise",
+        choices=["off", "free", "same", "other"],
+        default="off",
+        help="Run with background noise (default: off).",
+    )
     parser.add_argument("--tag", action="append", default=[], help="Tag label")
     parser.add_argument(
         "--raw-format",
@@ -139,6 +145,8 @@ def write_summary_csv(path: Path, row: dict) -> None:
         "iters",
         "warmup",
         "pin_cpu",
+        "noise_mode",
+        "noise_cpu",
         "unit",
         "min",
         "p50",
@@ -161,6 +169,8 @@ INDEX_FIELDS = [
     "iters",
     "warmup",
     "pin_cpu",
+    "noise_mode",
+    "noise_cpu",
     "unit",
     "min",
     "p50",
@@ -188,22 +198,46 @@ INDEX_KEY_FIELDS = [
     "iters",
     "warmup",
     "pin_cpu",
+    "noise_mode",
+    "noise_cpu",
     "bench_args",
 ]
 
 
+def _merge_index_fields(fields: list[str]) -> list[str]:
+    merged = list(fields)
+    for field in INDEX_FIELDS:
+        if field not in merged:
+            merged.append(field)
+    return merged
+
+
+def _ensure_index_fields(path: Path) -> list[str]:
+    if not path.exists():
+        return INDEX_FIELDS
+    with path.open(newline="") as handle:
+        reader = csv.reader(handle)
+        existing = next(reader, None) or []
+    if not existing:
+        return INDEX_FIELDS
+    missing = [field for field in INDEX_FIELDS if field not in existing]
+    if not missing:
+        return existing
+    with path.open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        rows = list(reader)
+        existing = reader.fieldnames or []
+    merged = _merge_index_fields(existing)
+    with path.open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=merged, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
+    return merged
+
+
 def append_index_csv(path: Path, row: dict) -> None:
-    file_exists = path.exists()
-    fields = INDEX_FIELDS
-    needs_header = not file_exists
-    if file_exists:
-        with path.open(newline="") as handle:
-            reader = csv.reader(handle)
-            existing = next(reader, None)
-            if existing:
-                fields = existing
-            else:
-                needs_header = True
+    fields = _ensure_index_fields(path)
+    needs_header = not path.exists() or path.stat().st_size == 0
     with path.open("a", newline="") as handle:
         writer = csv.DictWriter(
             handle,
@@ -236,6 +270,7 @@ def update_index_csv(path: Path, row: dict, mode: str) -> None:
         append_index_csv(path, row)
         return
     fields, rows = _read_index_rows(path)
+    fields = _merge_index_fields(fields)
     target = _index_key(row)
     filtered = [existing for existing in rows if _index_key(existing) != target]
     filtered.append(row)
@@ -274,6 +309,8 @@ def main() -> int:
     ]
     if args.pin is not None:
         cmd += ["--pin", str(args.pin)]
+    if args.noise != "off":
+        cmd += ["--noise", args.noise]
     for tag in args.tag:
         cmd += ["--tag", tag]
     if args.bench_args:
@@ -327,6 +364,16 @@ def main() -> int:
 
         stats = compute_quantiles(samples)
 
+        meta_path = run_dir / "meta.json"
+        noise_mode = args.noise
+        noise_cpu = -1
+        try:
+            meta = json.loads(meta_path.read_text())
+            noise_mode = str(meta.get("noise_mode", noise_mode))
+            noise_cpu = int(meta.get("noise_cpu", noise_cpu))
+        except Exception:
+            pass
+
         tags_json = json.dumps(args.tag, separators=(",", ":"))
         if args.update_mode != "skip":
             summary_path = run_dir / "summary.csv"
@@ -336,6 +383,8 @@ def main() -> int:
                 "iters": args.iters,
                 "warmup": args.warmup,
                 "pin_cpu": args.pin if args.pin is not None else -1,
+                "noise_mode": noise_mode,
+                "noise_cpu": noise_cpu,
                 "unit": "ns",
                 "min": stats["min"],
                 "p50": stats["p50"],
@@ -356,6 +405,8 @@ def main() -> int:
                 "iters": args.iters,
                 "warmup": args.warmup,
                 "pin_cpu": args.pin if args.pin is not None else -1,
+                "noise_mode": noise_mode,
+                "noise_cpu": noise_cpu,
                 "unit": "ns",
                 "min": stats["min"],
                 "p50": stats["p50"],

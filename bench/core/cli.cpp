@@ -60,6 +60,29 @@ bool parse_summary_format(const std::string& arg, SummaryFormat* format) {
   return false;
 }
 
+bool parse_noise_mode(const std::string& arg, NoiseMode* mode) {
+  if (!mode) {
+    return false;
+  }
+  if (arg == "off" || arg == "none") {
+    *mode = NoiseMode::kOff;
+    return true;
+  }
+  if (arg == "free") {
+    *mode = NoiseMode::kFree;
+    return true;
+  }
+  if (arg == "same") {
+    *mode = NoiseMode::kSame;
+    return true;
+  }
+  if (arg == "other") {
+    *mode = NoiseMode::kOther;
+    return true;
+  }
+  return false;
+}
+
 }  // namespace
 
 CliParseResult parse_cli_args(int argc, char** argv) {
@@ -130,6 +153,19 @@ CliParseResult parse_cli_args(int argc, char** argv) {
       }
       result.options.pin_enabled = true;
       result.options.pin_cpu = value;
+    } else if (arg == "--noise") {
+      if (i + 1 >= argc) {
+        result.ok = false;
+        result.error = "--noise requires a mode";
+        return result;
+      }
+      NoiseMode mode = NoiseMode::kOff;
+      if (!parse_noise_mode(argv[++i], &mode)) {
+        result.ok = false;
+        result.error = "--noise expects 'off', 'free', 'same', or 'other'";
+        return result;
+      }
+      result.options.noise_mode = mode;
     } else if (arg == "--tag") {
       if (i + 1 >= argc) {
         result.ok = false;
@@ -186,6 +222,7 @@ CliParseResult parse_cli_args(int argc, char** argv) {
 void print_usage(const char* argv0, std::ostream& out) {
   out << "usage: " << argv0
       << " [--list] [--case name] [--out dir] [--iters N] [--warmup N]"
-         " [--pin cpu] [--tag label] [--summary-format human|csv]"
+         " [--pin cpu] [--noise off|free|same|other] [--tag label]"
+         " [--summary-format human|csv]"
          " [out.csv] [iters] [warmup]\n";
 }

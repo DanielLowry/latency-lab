@@ -37,6 +37,7 @@ add_executable(bench
   bench/cases/fork_wait_case.cpp
   bench/core/meta.cpp
   bench/cases/noop_case.cpp
+  bench/core/noise.cpp
   bench/core/pinning.cpp
   bench/core/registry.cpp
   bench/core/run_utils.cpp

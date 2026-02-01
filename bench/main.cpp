@@ -1,6 +1,7 @@
 #include "cli.h"
 #include "csv.h"
 #include "meta.h"
+#include "noise.h"
 #include "pinning.h"
 #include "registry.h"
 #include "run_utils.h"
@@ -157,6 +158,24 @@ int run_benchmark(const Case& bench_case,
     bench_case.setup(&ctx);
   }
 
+  NoiseRunner noise;
+  NoiseConfig noise_config;
+  noise_config.mode = options.noise_mode;
+  noise_config.pin_enabled = options.pin_enabled;
+  noise_config.pin_cpu = options.pin_cpu;
+  std::string noise_error;
+  if (!noise.Start(noise_config, &noise_error)) {
+    std::cerr << "failed to start noise: " << noise_error << "\n";
+    if (bench_case.teardown) {
+      bench_case.teardown(&ctx);
+    }
+    return 1;
+  }
+
+  meta.noise = options.noise_mode != NoiseMode::kOff;
+  meta.noise_mode = noise_mode_label(options.noise_mode);
+  meta.noise_cpu = noise.noise_cpu();
+
   // Warmup reduces cold-start effects (cache/branch predictor) in the samples.
   for (uint64_t i = 0; i < options.warmup; ++i) {
     bench_case.run_once(&ctx);
@@ -172,6 +191,8 @@ int run_benchmark(const Case& bench_case,
     const uint64_t end = now_ns();
     samples.push_back(end - start);
   }
+
+  noise.Stop();
 
   if (bench_case.teardown) {
     bench_case.teardown(&ctx);

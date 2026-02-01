@@ -41,8 +41,8 @@ bool test_list_flag(int, char**) {
 bool test_named_options(int, char**) {
   const auto result =
       parse_args({"bench", "--case", "noop", "--iters", "42", "--warmup", "7",
-                  "--out", "results", "--pin", "2", "--tag", "quiet", "--tag",
-                  "warm", "--summary-format", "csv"});
+                  "--out", "results", "--pin", "2", "--noise", "free", "--tag",
+                  "quiet", "--tag", "warm", "--summary-format", "csv"});
   CHECK(result.ok);
   CHECK(result.options.case_name == "noop");
   CHECK(result.options.iters == 42);
@@ -50,6 +50,7 @@ bool test_named_options(int, char**) {
   CHECK(result.options.out_dir == "results");
   CHECK(result.options.pin_enabled);
   CHECK(result.options.pin_cpu == 2);
+  CHECK(result.options.noise_mode == NoiseMode::kFree);
   CHECK(result.options.tags.size() == 2);
   CHECK(result.options.tags[0] == "quiet");
   CHECK(result.options.tags[1] == "warm");

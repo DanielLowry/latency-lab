@@ -86,6 +86,7 @@ Minimum flags:
 - `--warmup N`
 - `--out <dir>`
 - `--pin <cpu>` (optional)
+- `--noise off|free|same|other` (optional)
 - `--tag <string>` (free-form labels like `quiet`, `noise`, `warm`)
 
 Pinning uses `sched_setaffinity` behind `--pin`.

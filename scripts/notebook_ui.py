@@ -46,6 +46,24 @@ class RunnerUI:
         self.tags_help = widgets.HTML(
             "Tags are free-form labels used only for naming runs and filtering results."
         )
+        self.noise_off = widgets.Checkbox(value=True, description="off")
+        self.noise_free = widgets.Checkbox(value=False, description="free")
+        self.noise_same = widgets.Checkbox(value=False, description="same (pinned)")
+        self.noise_other = widgets.Checkbox(value=False, description="other (pinned)")
+        self.noise_box = widgets.HBox(
+            [
+                widgets.HTML("<b>Noise</b>"),
+                self.noise_off,
+                self.noise_free,
+                self.noise_same,
+                self.noise_other,
+            ],
+            layout=widgets.Layout(align_items="center", gap="10px"),
+        )
+        self.noise_help = widgets.HTML(
+            "Noise runs a background spinner during warmup/measurement. "
+            "Same/other require pinned runs."
+        )
         self.update_mode = widgets.RadioButtons(
             options=[
                 ("Append (default)", "append"),
@@ -221,6 +239,18 @@ class RunnerUI:
             variants.append((f"pinned cpu {pin_value}", pin_value))
         return variants
 
+    def _noise_variants(self):
+        variants = []
+        if self.noise_off.value:
+            variants.append(("noise off", "off"))
+        if self.noise_free.value:
+            variants.append(("noise free", "free"))
+        if self.noise_same.value:
+            variants.append(("noise same", "same"))
+        if self.noise_other.value:
+            variants.append(("noise other", "other"))
+        return variants
+
     def _run_clicked(self, _):
         with self.output:
             clear_output()
@@ -231,16 +261,26 @@ class RunnerUI:
                 print("No cases selected.")
                 return
             tag_list = [t.strip() for t in self.tags.value.split(",") if t.strip()]
+            noise_variants = self._noise_variants()
+            if not noise_variants:
+                print("Select at least one noise option.")
+                return
 
             total_runs = 0
             for entry in selected:
-                total_runs += len(
-                    self._affinity_variants(
-                        entry["affinity_unpinned"].value,
-                        entry["affinity_pinned"].value,
-                        entry["pin_cpu"].value,
-                    )
+                variants = self._affinity_variants(
+                    entry["affinity_unpinned"].value,
+                    entry["affinity_pinned"].value,
+                    entry["pin_cpu"].value,
                 )
+                for _label, pin in variants:
+                    for _noise_label, noise_mode in noise_variants:
+                        if noise_mode in ("same", "other") and pin is None:
+                            continue
+                        total_runs += 1
+            if total_runs == 0:
+                print("No valid combinations (noise same/other require pinning).")
+                return
 
             run_idx = 0
             for entry in selected:
@@ -260,26 +300,35 @@ class RunnerUI:
                     print(f"{case_name}: Select at least one affinity option.")
                     continue
                 for label, pin in variants:
-                    run_idx += 1
-                    suffix = f" ({label})" if len(variants) > 1 else ""
-                    print(f"[{run_idx}/{total_runs}] {case_name}{suffix}")
-                    try:
-                        result = nb.run_case(
-                            bench_path=self.bench_path,
-                            lab=self.lab.value,
-                            case=case_name,
-                            results_dir=self.results_dir,
-                            iters=iters_value,
-                            warmup=warmup_value,
-                            pin_cpu=pin,
-                            tags=tag_list,
-                            update_mode=self.update_mode.value,
+                    for noise_label, noise_mode in noise_variants:
+                        if noise_mode in ("same", "other") and pin is None:
+                            continue
+                        run_idx += 1
+                        suffix_parts = [label, noise_label]
+                        suffix = (
+                            f" ({', '.join(suffix_parts)})"
+                            if total_runs > 1
+                            else ""
                         )
-                    except Exception as exc:
-                        print(f"Run failed for {case_name}: {exc}")
-                        continue
-                    print(f"Run dir: {result.run_dir}")
-                    print(result.read_stdout())
+                        print(f"[{run_idx}/{total_runs}] {case_name}{suffix}")
+                        try:
+                            result = nb.run_case(
+                                bench_path=self.bench_path,
+                                lab=self.lab.value,
+                                case=case_name,
+                                results_dir=self.results_dir,
+                                iters=iters_value,
+                                warmup=warmup_value,
+                                pin_cpu=pin,
+                                noise_mode=noise_mode,
+                                tags=tag_list,
+                                update_mode=self.update_mode.value,
+                            )
+                        except Exception as exc:
+                            print(f"Run failed for {case_name}: {exc}")
+                            continue
+                        print(f"Run dir: {result.run_dir}")
+                        print(result.read_stdout())
 
     def _wire_events(self) -> None:
         self.filter_text.observe(self._apply_filter, names="value")
@@ -299,6 +348,8 @@ class RunnerUI:
                 self.lab,
                 self.tags,
                 self.tags_help,
+                self.noise_box,
+                self.noise_help,
                 self.update_mode,
             ]
         )

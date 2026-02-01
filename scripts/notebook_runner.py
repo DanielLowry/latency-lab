@@ -65,6 +65,7 @@ def run_case(
     iters: int = 10000,
     warmup: int = 1000,
     pin_cpu: int | None = None,
+    noise_mode: str | None = None,
     tags: Iterable[str] | None = None,
     update_mode: str = "append",
     extra_args: Iterable[str] | None = None,
@@ -93,6 +94,8 @@ def run_case(
     ]
     if pin_cpu is not None:
         cmd += ["--pin", str(pin_cpu)]
+    if noise_mode is not None:
+        cmd += ["--noise", str(noise_mode)]
     if tags:
         for tag in tags:
             cmd += ["--tag", tag]

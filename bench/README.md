@@ -31,6 +31,9 @@ Required keys:
 - `build_flags`
 - `pinning` (boolean)
 - `pinned_cpu` (only when `pinning=true`)
+- `noise` (boolean)
+- `noise_mode` (`off`, `free`, `same`, `other`)
+- `noise_cpu` (CPU index if pinned, otherwise `-1`)
 - `tags` (array of strings, e.g., `quiet`, `noise`, `warm`, `cold`)
 
 Note: keep this minimal but consistent; add keys later as needed.
