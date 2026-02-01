@@ -1,2 +1,2 @@
 case,tags,iters,warmup,pin_cpu,unit,min,p50,p95,p99,p999,max,mean
-noop,"[""quiet""]",10000,1000,-1,ns,14,16,17,17,18,98,15.967600
+noop,[],10000,1000,0,ns,14,15,16,17,17,91,15.504500

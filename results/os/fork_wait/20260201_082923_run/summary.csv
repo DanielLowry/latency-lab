@@ -1,0 +1,2 @@
+case,tags,iters,warmup,pin_cpu,unit,min,p50,p95,p99,p999,max,mean
+fork_wait,[],10000,1000,0,ns,89891,95888,120356,269089,438732,547598,101339.553700

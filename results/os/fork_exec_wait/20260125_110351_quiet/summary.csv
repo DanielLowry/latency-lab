@@ -1,2 +1,0 @@
-case,tags,iters,warmup,pin_cpu,unit,min,p50,p95,p99,p999,max,mean
-fork_exec_wait,"[""quiet""]",10000,1000,-1,ns,379246,447541,509556,563360,827498,2551460,451787.716900

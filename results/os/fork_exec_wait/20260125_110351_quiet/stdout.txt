@@ -1,8 +1,0 @@
-fork_exec_wait (iters=10000)
-min=379.25 us
-p50=447.54 us
-p95=509.56 us
-p99=563.36 us
-p999=827.50 us
-max=2.55 ms
-mean=451.79 us
