@@ -14,12 +14,25 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "ninja-debug",
+      "displayName": "Ninja (Debug)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "ninja",
       "configurePreset": "ninja"
+    },
+    {
+      "name": "ninja-debug",
+      "configurePreset": "ninja-debug"
     }
   ]
 }

@@ -67,13 +67,18 @@ void fork_exec_setup(Ctx*) {
 void fork_exec_wait_run_once(Ctx*) {
   const pid_t pid = fork();
   if (pid == 0) {
+    // Child process
     char* const argv[] = {const_cast<char*>(g_child_exec_path.c_str()), nullptr};
     execv(g_child_exec_path.c_str(), argv);
     _exit(127);
   }
+
   if (pid < 0) {
+    // Failed to launch child
     return;
   }
+
+  // Parent
   int status = 0;
   while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {
   }

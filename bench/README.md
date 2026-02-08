@@ -2,6 +2,9 @@
 
 This document defines the timed region, output schema, and required metadata for Phase 1.
 
+For C++ toolchain dependencies and setup/build/debug commands, see
+`docs/dev_setup.md`.
+
 ## Timed region
 
 - Only `run_once()` is timed.

@@ -1,98 +1,150 @@
 # Development Setup
 
-## Requirements
-- CMake 3.28 or newer
-- A C++ compiler (g++ or clang++)
-- Ninja (recommended)
+This guide covers the C++ toolchain, build commands, and day-to-day run/test
+workflow for the benchmark harness.
 
-On Ubuntu/Debian:
-```
+## Platform and build model
+
+- Linux is currently required for the full bench target (`fork_exec_wait` is
+  Linux-only).
+- Builds must be out-of-source (`cmake -S . -B <build-dir>`). In-source builds
+  are blocked by the top-level `CMakeLists.txt`.
+
+## Required dependencies
+
+- CMake 3.28+
+- A C++23 compiler (`g++` or `clang++`)
+- Ninja (recommended generator)
+- GDB (optional, for debugging in terminal/VS Code)
+
+Ubuntu/Debian:
+
+```bash
 sudo apt update
-sudo apt install ninja-build build-essential cmake
+sudo apt install build-essential cmake ninja-build gdb
 ```
 
-## Build (recommended)
-This repo uses out-of-source builds.
-```
+## Configure and build
+
+The repo ships CMake presets for both release and debug builds.
+
+### Release preset
+
+```bash
 cmake --preset ninja
 cmake --build --preset ninja
 ```
 
-## Build (no Ninja)
+Artifacts are written to `build/` (including `build/bench`).
+
+### Debug preset
+
+```bash
+cmake --preset ninja-debug
+cmake --build --preset ninja-debug
 ```
-cmake -S . -B build -G "Unix Makefiles"
+
+Artifacts are written to `build-debug/` (including `build-debug/bench`).
+
+### Without presets (manual equivalent)
+
+```bash
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
+
+cmake -S . -B build-debug -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-debug
 ```
 
-## Run
-```
-./build/bench
-```
+## Running the benchmark
 
-Optional arguments:
-```
-./build/bench [out.csv] [iters] [warmup]
-```
+List available cases:
 
-List registered cases:
-```
+```bash
 ./build/bench --list
 ```
 
-Run a specific case:
-```
-./build/bench --case noop [out.csv] [iters] [warmup]
+Quick run:
+
+```bash
+./build/bench --case noop --iters 10000 --warmup 1000
 ```
 
-Named options (preferred for clarity):
+Run with output directory:
+
+```bash
+./build/bench --case noop --iters 10000 --warmup 1000 --out results/manual
 ```
-./build/bench --out results --iters 10000 --warmup 1000 --case noop
-./build/bench --pin 2 --tag quiet --tag warm
+
+`--out` writes `raw.csv`, `meta.json`, and `stdout.txt` in that directory.
+
+Defaults:
+
+- output path: `raw.csv`
+- iters: `10000`
+- warmup: `1000`
+
+## Tests
+
+Run tests for release build:
+
+```bash
+ctest --test-dir build --output-on-failure
 ```
-`--out` writes `raw.csv`, `meta.json`, and `stdout.txt` into the given directory.
+
+Run tests for debug build:
+
+```bash
+ctest --test-dir build-debug --output-on-failure
+```
+
+## Debugging notes
+
+- Build with `ninja-debug` before stepping through C++ source.
+- If using VS Code and `cppdbg`, set `program` to the debug binary:
+  `${workspaceFolder}/build-debug/bench`.
 
 ## Runner script (optional)
-Use the helper script to create the results layout and capture stdout/stderr.
-```
+
+Use the helper script to create the results layout and capture stdout/stderr:
+
+```bash
 python3 scripts/run_bench.py --lab os --case noop --iters 10000 --warmup 1000 --tag quiet
 ```
-This creates:
-```
+
+Output layout:
+
+```text
 results/<lab>/<case>/<timestamp>_<tag>/
   raw.csv
   meta.json
   stdout.txt
 ```
 
-## Verify pinning from the shell
-You can inspect the process affinity from the outside using the PID.
-```
+## Verify CPU pinning
+
+From another shell:
+
+```bash
 ./build/bench --pin 2 --case noop --iters 10000000 --warmup 0 --out /tmp/bench &
 pid=$!
 grep Cpus_allowed_list /proc/$pid/status
 wait $pid
 ```
 
-If `taskset` is available, this is also convenient:
-```
-taskset -pc $pid
+If `taskset` is installed:
+
+```bash
+taskset -pc "$pid"
 ```
 
-Defaults:
-- out.csv: `raw.csv`
-- iters: `10000`
-- warmup: `1000`
+## Clean build outputs
 
-## Clean
-```
-cmake --build build --target clean
+```bash
+cmake --build --preset ninja --target clean
+cmake --build --preset ninja-debug --target clean
 ```
 
-## Tests
-```
-ctest --test-dir build --output-on-failure
-```
+## Python tooling
 
-## Python tools
-See `docs/python_tools.md` for installing the Python environment, running the
-bench runner script, and using the analysis notebook.
+For the notebook environment and analysis helpers, see `docs/python_tools.md`.
