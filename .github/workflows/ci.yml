@@ -38,7 +38,8 @@ jobs:
           out_base="$(mktemp -d)"
           echo "bench output dir: ${out_base}"
           ./build/bench --list
-          while IFS= read -r case_name; do
+          while IFS= read -r case_line; do
+            case_name="${case_line%%[[:space:]]*}"
             if [ -z "${case_name}" ]; then
               continue
             fi
