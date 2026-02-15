@@ -5,7 +5,7 @@
       "name": "Debug bench (noop quick)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/bench",
+      "program": "${workspaceFolder}/build-debug/bench",
       "args": [
         "--case",
         "noop",
@@ -30,7 +30,7 @@
       "name": "Debug bench (fork_exec_wait quick)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/bench",
+      "program": "${workspaceFolder}/build-debug/bench",
       "args": [
         "--case",
         "fork_exec_wait",
