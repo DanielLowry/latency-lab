@@ -6,6 +6,7 @@ struct Ctx {};
 
 struct Case {
   const char* name = nullptr;
+  const char* description = nullptr;
   void (*setup)(Ctx*) = nullptr;
   void (*run_once)(Ctx*) = nullptr;
   void (*teardown)(Ctx*) = nullptr;

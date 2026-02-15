@@ -24,10 +24,28 @@ namespace {
 
 // Keep listing logic in one place for --list and error paths.
 void list_cases(std::ostream& out) {
+  size_t max_name_len = 0;
   for (const Case* bench_case : cases()) {
     if (bench_case && bench_case->name) {
-      out << bench_case->name << "\n";
+      const size_t name_len = std::strlen(bench_case->name);
+      if (name_len > max_name_len) {
+        max_name_len = name_len;
+      }
     }
+  }
+
+  for (const Case* bench_case : cases()) {
+    if (!bench_case || !bench_case->name) {
+      continue;
+    }
+
+    out << bench_case->name;
+    const char* description = bench_case->description;
+    if (description && *description) {
+      const size_t name_len = std::strlen(bench_case->name);
+      out << std::string(max_name_len - name_len + 2, ' ') << description;
+    }
+    out << "\n";
   }
 }
 

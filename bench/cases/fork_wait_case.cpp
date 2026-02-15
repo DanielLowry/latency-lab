@@ -25,6 +25,7 @@ void fork_wait_run_once(Ctx*) {
 
 const Case kForkWaitCase{
     "fork_wait",
+    "Forks a child that exits immediately, then waits for it in the parent.",
     nullptr,
     fork_wait_run_once,
     nullptr,

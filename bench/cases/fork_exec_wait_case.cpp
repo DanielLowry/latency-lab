@@ -35,7 +35,6 @@ std::string find_child_exec_path(std::string* error) {
   }
 
 
-
   // Find the location of the current executable, and use the path to find child_exec
   std::string current_exe_loc;
   current_exe_loc.resize(4096);
@@ -93,6 +92,7 @@ void fork_exec_wait_run_once(Ctx*) {
 
 const Case kForkExecWaitCase{
     "fork_exec_wait",
+    "Forks, execs the tiny child_exec binary, then waits for completion.",
     fork_exec_setup,
     fork_exec_wait_run_once,
     nullptr,

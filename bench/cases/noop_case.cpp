@@ -24,6 +24,7 @@ void noop_run_once(Ctx*) {
 
 const Case kNoopCase{
     "noop",
+    "Compiler-barrier no-op baseline to measure harness and timer overhead.",
     nullptr,
     noop_run_once,
     nullptr,
